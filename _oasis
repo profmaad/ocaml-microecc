@@ -12,7 +12,7 @@ Description: OCaml bindings for the micro-ecc ECC library, using CTypes
 
 PreBuildCommand: cc -Wall -Werror -fpic -O2 -DuECC_CURVE=uECC_secp256k1 -shared -o /tmp/libmicroecc.so micro-ecc/uECC.c
 PreInstallCommand: cc -Wall -Werror -fpic -O2 -DuECC_CURVE=uECC_secp256k1 -shared -o _build/src/dllmicroecc_stubs.so micro-ecc/uECC.c
-PostInstallCommand: install _build/src/dllmicroecc_stubs.so `ocamlfind printconf destdir`/stublibs/
+PostInstallCommand: install _build/src/dllmicroecc_stubs.so `ocamlfind printconf destdir`/stublibs/ && echo microecc > `ocamlfind printconf destdir`/stublibs/dllmicroecc_stubs.so.owner
 
 Library microecc
 	Path: src
@@ -38,8 +38,8 @@ Test test_microecc
 
 Document api
 	Title: "OCaml API for micro-ecc"
-	InstallDir: $htmldir/api
 	Type: ocamlbuild (0.4)
 	BuildTools: ocamlbuild, ocamldoc
 	XOCamlbuildPath: src
 	XOCamlbuildModules: Microecc
+	Install: false
