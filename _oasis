@@ -1,0 +1,37 @@
+OASISFormat: 0.4
+BuildTools: ocamlbuild
+Plugins: META (0.4), DevFiles (0.4)
+
+Name: ocaml-microecc
+Version: 20140611
+Synopsis: OCaml bindings for the micro-ecc ECC library
+Authors: Max Wolter <himself at prof-maad dot org>
+License: LGPL-2+
+
+Description: OCaml bindings for the micro-ecc ECC library, using CTypes
+
+PreBuildCommand: cc -Wall -Werror -fpic -O2 -DuECC_CURVE=uECC_secp256k1 -shared -o /tmp/libmicroecc.so micro-ecc/uECC.c
+PreInstallCommand: cc -Wall -Werror -fpic -O2 -DuECC_CURVE=uECC_secp256k1 -shared -o _build/src/dllmicroecc_stubs.so micro-ecc/uECC.c
+PostInstallCommand: install _build/src/dllmicroecc_stubs.so `ocamlfind printconf destdir`/stublibs/
+
+Library microecc
+	Path: src
+	BuildDepends:
+		ctypes,
+		ctypes.foreign
+	Modules: Microecc
+	CCLib: -L/tmp/ -lmicroecc
+	DllLib: -lmicroecc_stubs
+
+Executable test_microecc
+	Path: test
+	MainIs: test_microecc.ml
+	BuildDepends: microecc
+	Install: false
+	CompiledObject: native
+
+Test test_microecc
+     Run$: flag(tests)
+     TestTools: test_microecc
+     Command: $test_microecc
+     WorkingDirectory: test
