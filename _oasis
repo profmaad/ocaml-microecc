@@ -33,5 +33,5 @@ Executable test_microecc
 Test test_microecc
      Run$: flag(tests)
      TestTools: test_microecc
-     Command: $test_microecc
+     Command: LD_LIBRARY_PATH=/tmp/:\$LD_LIBRARY_PATH $test_microecc
      WorkingDirectory: test
