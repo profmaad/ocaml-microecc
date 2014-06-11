@@ -31,7 +31,15 @@ Executable test_microecc
 	CompiledObject: native
 
 Test test_microecc
-     Run$: flag(tests)
-     TestTools: test_microecc
-     Command: LD_LIBRARY_PATH=/tmp/:\$LD_LIBRARY_PATH $test_microecc
-     WorkingDirectory: test
+	Run$: flag(tests)
+	TestTools: test_microecc
+	Command: LD_LIBRARY_PATH=/tmp/:\$LD_LIBRARY_PATH $test_microecc
+	WorkingDirectory: test
+
+Document api
+	Title: "OCaml API for micro-ecc"
+	InstallDir: $htmldir/api
+	Type: ocamlbuild (0.4)
+	BuildTools: ocamlbuild, ocamldoc
+	XOCamlbuildPath: src
+	XOCamlbuildModules: Microecc
