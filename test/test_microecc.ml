@@ -13,8 +13,6 @@ let print_hex_string_with_prefix s prefix =
   Printf.printf "%s%s" prefix_string tabs; print_hex_string s; print_newline ()
 ;;
 
-let curve = Curve.secp160r1 ()
-
 let generate_random_hash length =
   let hash = String.make length '\x00' in
   for i = 0 to length - 1 do
@@ -23,7 +21,7 @@ let generate_random_hash length =
   hash
 ;;
 
-let compression_test public_key =
+let compression_test ~curve public_key =
   print_endline "Running compression/decompression test...";
   let compressed_pubkey = compress curve public_key in
   print_hex_string_with_prefix compressed_pubkey "Compressed public key";
@@ -35,7 +33,7 @@ let compression_test public_key =
     (print_endline "FAILED"; false)
 ;;
 
-let ecdsa_test public_key private_key =
+let ecdsa_test ~curve public_key private_key =
   print_endline "Running ECDSA signature generation/verification test...";
   let hash = generate_random_hash 32 in
   print_hex_string_with_prefix hash "Hash";
@@ -48,7 +46,7 @@ let ecdsa_test public_key private_key =
     | false -> print_endline "FAILED: Signature verification failed"; false
 ;;
 
-let ecdh_test public_key_1 private_key_1 =
+let ecdh_test ~curve public_key_1 private_key_1 =
   print_endline "Running ECDH test...";
   match make_key curve with
   | None -> print_endline "FAILED: Key generation failed"; false
@@ -72,21 +70,49 @@ let int_of_bool = function
   | true -> 1
 ;;
 
+let test_curve curve =
+  let total_tests = 4 in
+  let failed = ref total_tests in
+  begin match make_key curve with
+  | None ->
+     print_endline "Key generation failed";
+  | Some (public_key, private_key) ->
+     failed := !failed - 1;
+     print_hex_string_with_prefix public_key "Public key";
+     print_hex_string_with_prefix private_key "Private key";
+     print_newline ();
+     failed := !failed - int_of_bool (compression_test ~curve public_key);
+     print_newline ();
+     failed := !failed - int_of_bool (ecdsa_test ~curve public_key private_key);
+     print_newline ();
+     failed := !failed - int_of_bool (ecdh_test ~curve public_key private_key);
+     print_newline ();
+  end;
+  total_tests, !failed
+;;
+
+let curves =
+  let open Curve in
+  [ "secp160r1", secp160r1
+  ; "secp192r1", secp192r1
+  ; "secp224r1", secp224r1
+  ; "secp256r1", secp256r1
+  ; "secp256k1", secp256k1
+  ]
+;;
+
 let () =
   Random.self_init ();
-  match make_key curve with
-  | None -> print_endline "Key generation failed"
-  | Some (public_key, private_key) ->
-    print_hex_string_with_prefix public_key "Public key";
-    print_hex_string_with_prefix private_key "Private key";
-    print_newline ();
-    let passed = ref 0 in
-    passed := !passed + int_of_bool (compression_test public_key);
-    print_newline ();
-    passed := !passed + int_of_bool (ecdsa_test public_key private_key);
-    print_newline ();
-    passed := !passed + int_of_bool (ecdh_test public_key private_key);
-    print_newline ();
-    Printf.printf "RESULTS: %d passed, %d failed\n" !passed (3 - !passed);
-    exit (3 - !passed)
+  let total, failed =
+    List.fold_left
+      (fun (total, failed) (name, curve) ->
+        Printf.printf "TESTING CURVE %s\n" name;
+        let total', failed' = test_curve (curve ()) in
+        Printf.printf "CURVE RESULTS FOR %s: %d passed, %d failed\n\n" name (total' - failed') failed';
+        (total + total', failed + failed'))
+      (0, 0)
+      curves
+  in
+  Printf.printf "OVERALL RESULTS: %d passed, %d failed\n" (total - failed) failed;
+  exit failed
 ;;
