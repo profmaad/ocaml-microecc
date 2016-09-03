@@ -16,18 +16,18 @@ let print_hex_string_with_prefix s prefix =
 let generate_random_hash length =
   let hash = String.make length '\x00' in
   for i = 0 to length - 1 do
-    String.set hash i (Char.chr (Random.int 256))
+    Bytes.set hash i (Char.chr (Random.int 256))
   done;
   hash
 ;;
 
-let compression_test public_key = 
+let compression_test public_key =
   print_endline "Running compression/decompression test...";
   let compressed_pubkey = compress public_key in
   print_hex_string_with_prefix compressed_pubkey "Compressed public key";
   let decompressed_pubkey = decompress compressed_pubkey in
   print_hex_string_with_prefix decompressed_pubkey "Decompressed public key";
-  if (compare public_key decompressed_pubkey) = 0 then 
+  if (compare public_key decompressed_pubkey) = 0 then
     (print_endline "PASSED"; true)
   else
     (print_endline "FAILED"; false)
@@ -57,7 +57,7 @@ let ecdh_test public_key_1 private_key_1 =
       print_hex_string_with_prefix shared_secret_1 "Shared Secret 1";
       match shared_secret public_key_1 private_key_2 with
       | None -> print_endline "FAILED: shared secret generation 2"; false
-      | Some shared_secret_2 -> 
+      | Some shared_secret_2 ->
 	print_hex_string_with_prefix shared_secret_2 "Shared Secret 2";
 	if (compare shared_secret_1 shared_secret_2) = 0 then
 	  (print_endline "PASSED"; true)

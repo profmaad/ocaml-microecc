@@ -1,0 +1,27 @@
+_build
+*.native
+*.byte
+*.docdir
+
+setup.data
+setup.log
+
+*.annot
+*.cmo
+*.cma
+*.cmi
+*.a
+*.o
+*.cmx
+*.cmxs
+*.cmxa
+
+# oasis artifacts
+Makefile
+configure
+myocamlbuild.ml
+setup.ml
+META
+*.odocl
+*.mldylib
+*.mllib
