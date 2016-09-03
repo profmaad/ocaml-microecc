@@ -21,45 +21,45 @@ let generate_random_hash length =
   hash
 ;;
 
-let compression_test ~curve public_key =
+let compression_test ~curve ~public_key =
   print_endline "Running compression/decompression test...";
-  let compressed_pubkey = compress curve public_key in
+  let compressed_pubkey = compress curve ~public_key in
   print_hex_string_with_prefix compressed_pubkey "Compressed public key";
-  let decompressed_pubkey = decompress curve compressed_pubkey in
+  let decompressed_pubkey = decompress curve ~compressed_point:compressed_pubkey in
   print_hex_string_with_prefix decompressed_pubkey "Decompressed public key";
-  if (compare public_key decompressed_pubkey) = 0 then
+  if String.equal public_key decompressed_pubkey then
     (print_endline "PASSED"; true)
   else
     (print_endline "FAILED"; false)
 ;;
 
-let ecdsa_test ~curve public_key private_key =
+let ecdsa_test ~curve ~public_key ~private_key =
   print_endline "Running ECDSA signature generation/verification test...";
   let hash = generate_random_hash 32 in
   print_hex_string_with_prefix hash "Hash";
-  match sign curve private_key hash with
+  match sign curve ~private_key ~hash with
   | None -> print_endline "FAILED: Signature generation failed"; false
   | Some signature ->
     print_hex_string_with_prefix signature "Signature";
-    match verify curve public_key hash signature with
-    | true -> print_endline "PASSED"; true
+    match verify curve ~public_key ~hash ~signature with
+    | true  -> print_endline "PASSED"; true
     | false -> print_endline "FAILED: Signature verification failed"; false
 ;;
 
-let ecdh_test ~curve public_key_1 private_key_1 =
+let ecdh_test ~curve ~public_key:public_key_1 ~private_key:private_key_1 =
   print_endline "Running ECDH test...";
   match make_key curve with
   | None -> print_endline "FAILED: Key generation failed"; false
-  | Some (public_key_2, private_key_2) ->
-    match shared_secret curve public_key_2 private_key_1 with
+  | Some (`Public_key public_key_2, `Private_key private_key_2) ->
+    match shared_secret curve ~opposite_public_key:public_key_2 ~private_key:private_key_1 with
     | None -> print_endline "FAILED: shared secret generation 1"; false
     | Some shared_secret_1 ->
       print_hex_string_with_prefix shared_secret_1 "Shared Secret 1";
-      match shared_secret curve public_key_1 private_key_2 with
+      match shared_secret curve ~opposite_public_key:public_key_1 ~private_key:private_key_2 with
       | None -> print_endline "FAILED: shared secret generation 2"; false
       | Some shared_secret_2 ->
 	print_hex_string_with_prefix shared_secret_2 "Shared Secret 2";
-	if (compare shared_secret_1 shared_secret_2) = 0 then
+	if String.equal shared_secret_1 shared_secret_2 then
 	  (print_endline "PASSED"; true)
 	else
 	  (print_endline "FAILED: shared secrets don't match"; false)
@@ -67,7 +67,7 @@ let ecdh_test ~curve public_key_1 private_key_1 =
 
 let int_of_bool = function
   | false -> 0
-  | true -> 1
+  | true  -> 1
 ;;
 
 let test_curve curve =
@@ -76,16 +76,16 @@ let test_curve curve =
   begin match make_key curve with
   | None ->
      print_endline "Key generation failed";
-  | Some (public_key, private_key) ->
+  | Some (`Public_key public_key, `Private_key private_key) ->
      failed := !failed - 1;
      print_hex_string_with_prefix public_key "Public key";
      print_hex_string_with_prefix private_key "Private key";
      print_newline ();
-     failed := !failed - int_of_bool (compression_test ~curve public_key);
+     failed := !failed - int_of_bool (compression_test ~curve ~public_key);
      print_newline ();
-     failed := !failed - int_of_bool (ecdsa_test ~curve public_key private_key);
+     failed := !failed - int_of_bool (ecdsa_test ~curve ~public_key ~private_key);
      print_newline ();
-     failed := !failed - int_of_bool (ecdh_test ~curve public_key private_key);
+     failed := !failed - int_of_bool (ecdh_test ~curve ~public_key ~private_key);
      print_newline ();
   end;
   total_tests, !failed

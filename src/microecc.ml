@@ -48,12 +48,12 @@ let make_key curve =
   let public_key  = string_of_uint8_array public_key_array  (Curve.public_key_size curve)  in
   let private_key = string_of_uint8_array private_key_array (Curve.private_key_size curve) in
   match result with
-  | 1 -> Some (public_key, private_key)
+  | 1 -> Some (`Public_key public_key, `Private_key private_key)
   | _ -> None
 ;;
 
 let shared_secret_c = foreign "uECC_shared_secret" (ptr uint8_t @-> ptr uint8_t @-> ptr uint8_t @-> Curve.t @-> returning int);;
-let shared_secret curve opposite_public_key private_key =
+let shared_secret curve ~opposite_public_key ~private_key =
   let public_key_array = char_array_of_string opposite_public_key in
   let private_key_array = char_array_of_string private_key in
   let shared_secret_array = CArray.make uint8_t (Curve.shared_secret_size curve) in
@@ -65,7 +65,7 @@ let shared_secret curve opposite_public_key private_key =
 ;;
 
 let compress_c = foreign "uECC_compress" (ptr uint8_t @-> ptr uint8_t @-> Curve.t @-> returning void);;
-let compress curve public_key =
+let compress curve ~public_key =
   let public_key_array = char_array_of_string public_key in
   let compressed_point_array = CArray.make uint8_t (Curve.compressed_point_size curve) in
   compress_c (uint8_ptr_of_char_array public_key_array) (CArray.start compressed_point_array) curve;
@@ -73,7 +73,7 @@ let compress curve public_key =
 ;;
 
 let decompress_c = foreign "uECC_decompress" (ptr uint8_t @-> ptr uint8_t @-> Curve.t @-> returning void);;
-let decompress curve compressed_point =
+let decompress curve ~compressed_point =
   let compressed_point_array = char_array_of_string compressed_point in
   let public_key_array = CArray.make uint8_t (Curve.public_key_size curve) in
   decompress_c (uint8_ptr_of_char_array compressed_point_array) (CArray.start public_key_array) curve;
@@ -81,7 +81,7 @@ let decompress curve compressed_point =
 ;;
 
 let sign_c = foreign "uECC_sign" (ptr uint8_t @-> ptr uint8_t @-> uint @-> ptr uint8_t @-> Curve.t @-> returning int);;
-let sign curve private_key hash =
+let sign curve ~private_key ~hash =
   let private_key_array = char_array_of_string private_key in
   let hash_array = char_array_of_string hash in
   let hash_size  = String.length hash in
@@ -101,7 +101,7 @@ let sign curve private_key hash =
 ;;
 
 let verify_c = foreign "uECC_verify" (ptr uint8_t @-> ptr uint8_t @-> uint @-> ptr uint8_t @-> Curve.t @-> returning int);;
-let verify curve public_key hash signature =
+let verify curve ~public_key ~hash ~signature =
   let public_key_array = char_array_of_string public_key in
   let hash_array = char_array_of_string hash in
   let hash_size = String.length hash in
