@@ -2,8 +2,12 @@ open Ctypes;;
 open Foreign;;
 
 module Curve = struct
-  type t
-  let t : t structure typ = structure "uECC_Curve_t"
+  module T = struct
+    type t
+    let t : t structure typ = structure "uECC_Curve_t"
+  end
+  type t = T.t structure ptr
+  let t = ptr T.t
 
   let private_key_size = foreign "uECC_curve_private_key_size" (t @-> returning int)
   let public_key_size  = foreign "uECC_curve_public_key_size"  (t @-> returning int)
@@ -76,7 +80,7 @@ let decompress curve compressed_point =
   string_of_uint8_array public_key_array (Curve.public_key_size curve)
 ;;
 
-let sign_c = foreign "uECC_sign" (ptr uint8_t @-> ptr uint8_t @-> uint64_t @-> ptr uint8_t @-> Curve.t @-> returning int);;
+let sign_c = foreign "uECC_sign" (ptr uint8_t @-> ptr uint8_t @-> uint @-> ptr uint8_t @-> Curve.t @-> returning int);;
 let sign curve private_key hash =
   let private_key_array = char_array_of_string private_key in
   let hash_array = char_array_of_string hash in
@@ -86,7 +90,7 @@ let sign curve private_key hash =
     sign_c
       (uint8_ptr_of_char_array private_key_array)
       (uint8_ptr_of_char_array hash_array)
-      hash_size
+      (Unsigned.UInt.of_int hash_size)
       (CArray.start signature_array)
       curve
   in
@@ -96,7 +100,7 @@ let sign curve private_key hash =
   | _ -> None
 ;;
 
-let verify_c = foreign "uECC_verify" (ptr uint8_t @-> ptr uint8_t @-> uint64t @-> ptr uint8_t @-> Curve.t @-> returning int);;
+let verify_c = foreign "uECC_verify" (ptr uint8_t @-> ptr uint8_t @-> uint @-> ptr uint8_t @-> Curve.t @-> returning int);;
 let verify curve public_key hash signature =
   let public_key_array = char_array_of_string public_key in
   let hash_array = char_array_of_string hash in
@@ -106,7 +110,7 @@ let verify curve public_key hash signature =
     verify_c
       (uint8_ptr_of_char_array public_key_array)
       (uint8_ptr_of_char_array hash_array)
-      hash_size
+      (Unsigned.UInt.of_int hash_size)
       (uint8_ptr_of_char_array signature_array)
       curve
   in

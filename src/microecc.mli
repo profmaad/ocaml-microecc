@@ -4,11 +4,11 @@
 module Curve : sig
   type t
 
-  val secp160r1 : t
-  val secp192r1 : t
-  val secp224r1 : t
-  val secp256r1 : t
-  val secp256k1 : t
+  val secp160r1 : unit -> t
+  val secp192r1 : unit -> t
+  val secp224r1 : unit -> t
+  val secp256r1 : unit -> t
+  val secp256k1 : unit -> t
 
   val private_key_size : t -> int
   val public_key_size  : t -> int
