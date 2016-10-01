@@ -1,18 +1,18 @@
 OASISFormat: 0.4
+OCamlVersion: >= 4.03
 BuildTools: ocamlbuild
 Plugins: META (0.4), DevFiles (0.4)
 
 Name: ocaml-microecc
-Version: 20140611
+Version: 20160917
 Synopsis: OCaml bindings for the micro-ecc ECC library
 Authors: Max Wolter <himself at prof-maad dot org>
 License: LGPL-2+
 
 Description: OCaml bindings for the micro-ecc ECC library, using CTypes
 
-PreBuildCommand: cc -Wall -Werror -fpic -O2 -DuECC_CURVE=uECC_secp256k1 -shared -o /tmp/libmicroecc.so micro-ecc/uECC.c
-PreInstallCommand: cc -Wall -Werror -fpic -O2 -DuECC_CURVE=uECC_secp256k1 -shared -o _build/src/dllmicroecc_stubs.so micro-ecc/uECC.c
-PostInstallCommand: install _build/src/dllmicroecc_stubs.so `ocamlfind printconf destdir`/stublibs/ && echo microecc > `ocamlfind printconf destdir`/stublibs/dllmicroecc_stubs.so.owner
+AlphaFeatures: ocamlbuild_more_args
+XOCamlbuildPluginTags: package(js-build-tools.ocamlbuild_goodies)
 
 Library microecc
   Path: src
@@ -20,8 +20,9 @@ Library microecc
     ctypes,
     ctypes.foreign
   Modules: Microecc
-  CCLib: -L/tmp/ -lmicroecc
-  DllLib: -lmicroecc_stubs
+  CSources: uECC.c
+  CCOpt: -I ../micro-ecc/ -O2 -Wall -Wextra -Wno-unused-parameter
+  #DllLib: -lmicroecc_stubs
 
 Executable test_microecc
   Path: test
@@ -33,7 +34,7 @@ Executable test_microecc
 Test test_microecc
   Run$: flag(tests)
   TestTools: test_microecc
-  Command: LD_LIBRARY_PATH=/tmp/:\$LD_LIBRARY_PATH $test_microecc
+  Command: $test_microecc
   WorkingDirectory: test
 
 Document api
